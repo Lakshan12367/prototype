@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ROMO — Full Ecosystem Prototype</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+
+:root {
+  --bg: #0a0e08;
+  --screen: #9bbc0f;
+  --screen-dim: #0f380f;
+  --screen-mid: #306230;
+  --screen-light: #8bac0f;
+  --device: #2a2a26;
+  --device-light: #3a3a36;
+  --paper: #c4cf8f;
+  --accent: #9bbc0f;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: radial-gradient(ellipse at center, #14180e 0%, #050605 100%);
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--screen);
+  min-height: 100vh;
+  padding: 1.5rem 1rem;
+}
+
+/* TOP BAR */
+.top-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 920px;
+  margin: 0 auto 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid #1a1a16;
+}
+.brand { font-family: 'VT323', monospace; font-size: 22px; color: var(--screen); letter-spacing: 0.2em; }
+.brand-sub { font-size: 9px; color: #4a5040; letter-spacing: 0.15em; text-transform: uppercase; margin-top: 2px; }
+.sound-toggle {
+  background: #1a1a16; border: 1px solid #2a2a26; color: var(--screen-mid);
+  padding: 6px 12px; border-radius: 4px; cursor: pointer;
+  font-family: 'Share Tech Mono', monospace; font-size: 10px; letter-spacing: 0.1em;
+}
+.sound-toggle.on { background: var(--screen-dim); color: var(--screen); border-color: var(--screen-mid); }
+
+/* MAIN STAGE */
+.stage {
+  max-width: 920px; margin: 0 auto;
+  display: grid; grid-template-columns: 1fr auto 1fr; gap: 1rem;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .stage { grid-template-columns: 1fr; }
+  .sync-zone { order: 2; }
+  .device-side { order: 3; }
+}
+
+/* PHONE SIDE */
+.phone-side, .device-side { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.side-label { font-size: 9px; color: #4a5040; letter-spacing: 0.15em; text-transform: uppercase; }
+
+/* PHONE */
+.phone {
+  background: linear-gradient(145deg, #1a1a16, #0a0a08);
+  border-radius: 32px;
+  padding: 10px;
+  width: 280px;
+  box-shadow: 0 0 0 1px #2a2a26, 0 12px 40px rgba(0,0,0,0.6);
+  position: relative;
+}
+.phone::before {
+  content: ''; position: absolute; top: 18px; left: 50%; transform: translateX(-50%);
+  width: 60px; height: 5px; background: #050605; border-radius: 3px;
+}
+.phone-screen {
+  background: #1a1f15;
+  border-radius: 24px;
+  min-height: 480px;
+  padding: 36px 14px 14px;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+.phone-status {
+  position: absolute; top: 8px; left: 16px; right: 16px;
+  display: flex; justify-content: space-between;
+  font-size: 9px; color: var(--screen-mid); letter-spacing: 0.05em;
+  z-index: 5;
+}
+.phone-time { font-weight: bold; }
+
+/* APP HEADER */
+.app-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 4px 4px 10px; border-bottom: 1px solid var(--screen-dim);
+  margin-bottom: 12px;
+}
+.app-title { font-family: 'VT323', monospace; font-size: 18px; color: var(--screen); letter-spacing: 0.15em; }
+.app-bell { font-size: 14px; color: var(--screen-mid); cursor: pointer; }
+
+/* APP TABS */
+.app-tabs {
+  display: flex; gap: 2px;
+  background: #0f1410; border-radius: 4px; padding: 2px;
+  margin-bottom: 12px;
+}
+.app-tab {
+  flex: 1; padding: 6px 4px;
+  font-family: 'Share Tech Mono', monospace; font-size: 9px;
+  color: var(--screen-mid); letter-spacing: 0.06em;
+  cursor: pointer; text-align: center;
+  border-radius: 3px; text-transform: uppercase;
+  background: none; border: none;
+}
+.app-tab.active { background: var(--screen-dim); color: var(--screen); }
+
+/* APP PANEL */
+.app-panel { display: none; flex: 1; flex-direction: column; }
+.app-panel.active { display: flex; }
+
+/* APP STATS GRID */
+.stat-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+  margin-bottom: 12px;
+}
+.stat-card {
+  background: #0f1410; border: 1px solid var(--screen-dim);
+  border-radius: 6px; padding: 10px;
+}
+.stat-label { font-size: 8px; color: var(--screen-mid); letter-spacing: 0.1em; text-transform: uppercase; }
+.stat-value { font-family: 'VT323', monospace; font-size: 24px; color: var(--screen); margin-top: 4px; }
+.stat-trend { font-size: 8px; color: var(--screen-mid); margin-top: 2px; }
+
+/* LIMIT BAR */
+.limit-section { margin-bottom: 12px; }
+.limit-head { display: flex; justify-content: space-between; font-size: 9px; color: var(--screen-mid); margin-bottom: 4px; letter-spacing: 0.08em; }
+.limit-bar {
+  height: 6px; background: var(--screen-dim); border-radius: 3px; overflow: hidden;
+  position: relative;
+}
+.limit-fill {
+  height: 100%; background: var(--screen); border-radius: 3px;
+  transition: width 0.5s ease;
+}
+
+/* QUEUE LIST */
+.queue-list { flex: 1; overflow-y: auto; }
+.queue-item {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 8px 10px;
+  background: #0f1410;
+  border: 1px solid var(--screen-dim);
+  border-radius: 4px;
+  margin-bottom: 4px;
+  font-size: 10px; color: var(--screen);
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+.queue-item:hover { background: var(--screen-dim); }
+.queue-item.syncing {
+  background: var(--screen-dim);
+  animation: pulse-sync 0.6s ease;
+}
+@keyframes pulse-sync {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+.queue-item.releasing {
+  animation: queue-release 0.5s ease forwards;
+}
+@keyframes queue-release {
+  to { opacity: 0; transform: translateX(-30px); }
+}
+.qi-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qi-age { font-size: 8px; color: var(--screen-mid); margin-left: 8px; }
+.qi-tag {
+  font-size: 7px; color: var(--screen-dim); background: var(--screen-mid);
+  padding: 1px 5px; border-radius: 8px; margin-left: 6px;
+}
+
+/* SHARE SHEET MODAL */
+.share-sheet {
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  background: #0f1410;
+  border-top: 2px solid var(--screen);
+  border-radius: 16px 16px 0 0;
+  padding: 16px;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 10;
+}
+.share-sheet.open { transform: translateY(0); }
+.share-sheet-title {
+  font-size: 10px; color: var(--screen-mid); letter-spacing: 0.1em;
+  text-transform: uppercase; margin-bottom: 10px; text-align: center;
+}
+.share-content {
+  background: var(--screen-dim); border-radius: 6px; padding: 10px;
+  font-size: 10px; color: var(--screen); margin-bottom: 12px;
+}
+.share-apps {
+  display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
+  margin-bottom: 12px;
+}
+.share-app {
+  background: #0a0e08; border: 1px solid var(--screen-dim);
+  border-radius: 6px; padding: 8px 4px; text-align: center;
+  cursor: pointer; transition: all 0.2s;
+}
+.share-app:hover { border-color: var(--screen); }
+.share-app.romo { border: 2px solid var(--screen); background: var(--screen-dim); }
+.share-app-icon {
+  width: 24px; height: 24px; margin: 0 auto 4px;
+  background: var(--screen-mid); border-radius: 6px;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--screen-dim); font-family: 'VT323', monospace; font-size: 14px;
+}
+.share-app.romo .share-app-icon { background: var(--screen); }
+.share-app-name { font-size: 8px; color: var(--screen); }
+
+/* TAG SELECTOR */
+.tag-row {
+  display: flex; gap: 4px; flex-wrap: wrap;
+  margin: 8px 0;
+}
+.tag-pill {
+  background: #0a0e08; border: 1px solid var(--screen-dim);
+  border-radius: 12px; padding: 4px 10px;
+  font-size: 9px; color: var(--screen-mid); cursor: pointer;
+  transition: all 0.15s;
+}
+.tag-pill:hover { color: var(--screen); border-color: var(--screen-mid); }
+.tag-pill.selected { background: var(--screen); color: var(--screen-dim); border-color: var(--screen); }
+
+/* APP BUTTON */
+.app-btn {
+  background: var(--screen);
+  color: var(--screen-dim);
+  border: none; border-radius: 6px;
+  padding: 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 11px; font-weight: bold;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  width: 100%;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.app-btn:hover { background: var(--screen-light); }
+.app-btn:active { transform: scale(0.98); }
+.app-btn.ghost {
+  background: none; color: var(--screen);
+  border: 1px solid var(--screen-mid);
+}
+
+/* WEEKLY GRID */
+.week-grid {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px;
+  margin: 8px 0;
+}
+.week-day {
+  aspect-ratio: 1;
+  background: var(--screen-dim);
+  border-radius: 3px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; color: var(--screen-mid);
+}
+.week-day.active { background: var(--screen); color: var(--screen-dim); }
+.week-day.partial { background: var(--screen-mid); color: var(--screen); }
+
+/* RELEASE LOG */
+.log-item {
+  font-size: 10px; color: var(--screen-mid);
+  padding: 6px 0; border-bottom: 1px dotted var(--screen-dim);
+  display: flex; justify-content: space-between;
+  text-decoration: line-through;
+}
+
+/* DEVICE */
+.device {
+  background: linear-gradient(145deg, #383834, #1a1a16);
+  border-radius: 24px;
+  padding: 18px;
+  width: 280px;
+  box-shadow: 0 0 0 1px #2a2a26, 0 12px 40px rgba(0,0,0,0.6), inset 0 1px 0 #4a4a46;
+  position: relative;
+}
+.device::after {
+  content: 'ROMO·01';
+  position: absolute;
+  bottom: 12px; right: 18px;
+  font-size: 8px; color: #2a2a26; letter-spacing: 0.15em;
+}
+
+/* DEVICE TOP STATUS */
+.device-status {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 8px;
+  padding: 0 4px;
+}
+.dev-led {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--screen-mid);
+  transition: background 0.3s;
+}
+.dev-led.active { background: var(--screen); box-shadow: 0 0 6px var(--screen); }
+.dev-status-text { font-size: 8px; color: #4a5040; letter-spacing: 0.1em; text-transform: uppercase; }
+
+/* DEVICE SCREEN */
+.device-bezel {
+  background: #050605;
+  border-radius: 12px;
+  padding: 6px;
+  margin-bottom: 14px;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.9);
+}
+.device-screen {
+  background: var(--screen);
+  border-radius: 6px;
+  min-height: 200px;
+  padding: 14px;
+  position: relative;
+  overflow: hidden;
+  display: flex; flex-direction: column; justify-content: space-between;
+  font-family: 'Share Tech Mono', monospace;
+  color: var(--screen-dim);
+}
+.device-screen::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(15,56,15,0.1) 2px, rgba(15,56,15,0.1) 4px);
+  pointer-events: none;
+  z-index: 5;
+}
+
+.ds-top {
+  display: flex; justify-content: space-between;
+  font-size: 8px; color: var(--screen-mid); letter-spacing: 0.08em; text-transform: uppercase;
+}
+.ds-title {
+  font-family: 'VT323', monospace; font-size: 24px;
+  color: var(--screen-dim); line-height: 1.2;
+  margin: 8px 0;
+}
+.ds-sub { font-size: 9px; color: var(--screen-mid); margin-bottom: 8px; }
+
+.ds-decay-wrap { margin-bottom: 8px; }
+.ds-decay-track { height: 4px; background: var(--screen-mid); border-radius: 2px; overflow: hidden; }
+.ds-decay-fill { height: 100%; background: var(--screen-dim); border-radius: 2px; transition: width 0.08s linear; }
+.ds-decay-label { font-size: 8px; color: var(--screen-mid); margin-top: 3px; letter-spacing: 0.06em; }
+
+.ds-row {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 8px; color: var(--screen-mid); letter-spacing: 0.08em;
+}
+
+.ds-msg {
+  position: absolute; inset: 0;
+  background: var(--screen);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; opacity: 0; pointer-events: none;
+  transition: opacity 0.3s; z-index: 4;
+}
+.ds-msg.show { opacity: 1; }
+.ds-msg-big { font-family: 'VT323', monospace; font-size: 32px; color: var(--screen-dim); margin-bottom: 4px; }
+.ds-msg-sm { font-size: 9px; color: var(--screen-mid); letter-spacing: 0.1em; }
+
+/* WEIGHT DOTS for device */
+.dev-weight { display: flex; gap: 3px; flex-wrap: wrap; margin-bottom: 6px; }
+.dev-wd {
+  width: 9px; height: 9px; background: var(--screen-dim); border-radius: 1px;
+  transition: all 0.4s ease;
+}
+.dev-wd.empty { background: var(--screen-mid); transform: scale(0.7); opacity: 0.4; }
+
+/* DEVICE CONTROLS */
+.dev-controls { display: flex; flex-direction: column; gap: 10px; }
+
+.dev-mode-row {
+  display: flex; gap: 3px;
+  background: #1a1a16; border-radius: 4px; padding: 3px;
+}
+.dev-mode {
+  flex: 1; padding: 5px 4px;
+  font-family: 'Share Tech Mono', monospace; font-size: 8px;
+  color: #5a5a50; letter-spacing: 0.04em; cursor: pointer;
+  text-align: center; border-radius: 3px; text-transform: uppercase;
+  background: none; border: none;
+}
+.dev-mode.active { background: var(--screen-dim); color: var(--screen); }
+
+/* WHEEL */
+.dev-wheel-zone {
+  display: flex; align-items: center; justify-content: center; gap: 12px;
+}
+.wheel {
+  width: 70px; height: 70px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #4a4a46, #2a2a26);
+  box-shadow: 0 0 0 1px #5a5a56, 0 4px 12px rgba(0,0,0,0.7), inset 0 1px 0 #555;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none;
+  position: relative; transition: transform 0.2s ease;
+}
+.wheel:active { transform: scale(0.96); }
+.wheel.turn-l { transform: rotate(-30deg); }
+.wheel.turn-r { transform: rotate(30deg); }
+.wheel-inner {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(145deg, #2a2a26, #1a1a16);
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+}
+.wheel-tick {
+  position: absolute; top: 4px; left: 50%;
+  transform: translateX(-50%);
+  width: 2px; height: 6px;
+  background: var(--screen);
+  border-radius: 1px;
+}
+.wheel-label {
+  font-size: 7px; color: #4a5040; letter-spacing: 0.08em;
+  text-align: center; line-height: 1.3;
+}
+
+/* HOLD BUTTON */
+.dev-btn-hold {
+  width: 100%;
+  background: linear-gradient(145deg, #4a4a46, #2a2a26);
+  border: 1px solid #5a5a56;
+  border-radius: 8px;
+  padding: 12px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; color: var(--screen);
+  letter-spacing: 0.12em; text-transform: uppercase;
+  cursor: pointer;
+  position: relative; overflow: hidden;
+  transition: all 0.1s;
+  text-align: center;
+}
+.dev-btn-hold:active { transform: scale(0.98); }
+.dev-btn-hold .btn-progress {
+  position: absolute; left: 0; top: 0; bottom: 0;
+  background: var(--screen-dim); transition: width 0.1s linear;
+  width: 0%; border-radius: 8px; opacity: 0.3;
+}
+.dev-btn-hold .btn-text { position: relative; z-index: 1; }
+
+/* DEVICE SIDE BUTTONS */
+.dev-side-btns { display: flex; gap: 6px; }
+.dev-side {
+  flex: 1; background: none;
+  border: 1px solid #2a2a26;
+  border-radius: 5px;
+  padding: 7px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 8px; color: #5a5a50;
+  letter-spacing: 0.08em; cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.dev-side:hover { color: var(--screen); border-color: var(--screen-mid); }
+.dev-side:active { transform: scale(0.97); }
+
+/* SYNC ZONE - between phone and device */
+.sync-zone {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  min-width: 80px;
+  position: relative;
+}
+@media (max-width: 720px) {
+  .sync-zone { flex-direction: row; padding: 0.5rem; }
+}
+
+.sync-line {
+  width: 60px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--screen-mid), transparent);
+  position: relative;
+  margin: 8px 0;
+}
+@media (max-width: 720px) {
+  .sync-line { width: 100px; }
+}
+
+.sync-pulse {
+  position: absolute;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--screen);
+  top: 50%; transform: translateY(-50%);
+  box-shadow: 0 0 8px var(--screen);
+  opacity: 0;
+}
+.sync-pulse.animate {
+  animation: sync-flow 1.2s ease forwards;
+}
+@keyframes sync-flow {
+  0% { left: 0; opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { left: 100%; opacity: 0; }
+}
+
+.sync-label {
+  font-size: 8px; color: #4a5040;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  margin: 4px 0;
+}
+
+/* TOAST */
+.toast {
+  position: fixed;
+  bottom: 20px; left: 50%; transform: translateX(-50%) translateY(100px);
+  background: #1a1a16;
+  border: 1px solid var(--screen-mid);
+  color: var(--screen);
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  z-index: 100;
+  transition: transform 0.3s ease;
+  box-shadow: 0 0 20px rgba(155, 188, 15, 0.3);
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+
+/* ACTIONS BAR */
+.actions-bar {
+  max-width: 920px;
+  margin: 1.5rem auto 0;
+  padding: 1rem;
+  background: #0f1410;
+  border: 1px solid var(--screen-dim);
+  border-radius: 8px;
+  display: flex; gap: 8px; flex-wrap: wrap;
+  justify-content: center;
+}
+.action-btn {
+  background: none;
+  border: 1px solid var(--screen-mid);
+  color: var(--screen);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s;
+}
+.action-btn:hover { background: var(--screen-dim); }
+
+.tutorial {
+  max-width: 920px;
+  margin: 1rem auto;
+  padding: 1rem;
+  background: #0f1410;
+  border-left: 2px solid var(--screen);
+  border-radius: 0 6px 6px 0;
+  font-size: 10px;
+  color: var(--screen-mid);
+  line-height: 1.7;
+  letter-spacing: 0.04em;
+}
+.tutorial b { color: var(--screen); }
+
+/* ANIMATIONS */
+@keyframes slidein { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+@keyframes flash { 0%,100%{opacity:1} 50%{opacity:0.3} }
+.anim-in { animation: slidein 0.3s ease; }
+.flashing { animation: flash 0.4s ease; }
+
+/* GRIEF NOTIFICATION */
+.notif-bubble {
+  background: var(--screen-dim);
+  border: 1px solid var(--screen-mid);
+  border-radius: 6px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.notif-t { font-size: 9px; color: var(--screen); font-weight: bold; }
+.notif-s { font-size: 8px; color: var(--screen-mid); margin-top: 2px; }
+
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="top-bar">
+  <div>
+    <div class="brand">ROMO</div>
+    <div class="brand-sub">phone + device · live demo</div>
+  </div>
+  <button class="sound-toggle" id="sound-toggle" onclick="toggleSound()">♪ sound: off</button>
+</div>
+
+<!-- TUTORIAL -->
+<div class="tutorial">
+  <b>How to use this prototype:</b> Tap <b>"+ save new"</b> on the phone to simulate saving Instagram content. Watch it sync to the device. Then on the device — turn the wheel or hold the button to release. The phone updates in real time.
+  Use the action bar at the bottom for full demo flows.
+</div>
+
+<!-- MAIN STAGE -->
+<div class="stage">
+
+  <!-- ============ PHONE SIDE ============ -->
+  <div class="phone-side">
+    <div class="side-label">📱 Mobile companion app</div>
+
+    <div class="phone">
+      <div class="phone-screen">
+
+        <!-- STATUS BAR -->
+        <div class="phone-status">
+          <span class="phone-time" id="phone-time">9:41</span>
+          <span>● ● ● 100%</span>
+        </div>
+
+        <!-- APP HEADER -->
+        <div class="app-header">
+          <div class="app-title">ROMO</div>
+          <div class="app-bell" onclick="showGriefNotif()">◉</div>
+        </div>
+
+        <!-- TABS -->
+        <div class="app-tabs">
+          <button class="app-tab active" onclick="switchAppTab('queue')">Queue</button>
+          <button class="app-tab" onclick="switchAppTab('week')">Week</button>
+          <button class="app-tab" onclick="switchAppTab('log')">Log</button>
+        </div>
+
+        <!-- QUEUE PANEL -->
+        <div class="app-panel active" id="panel-queue">
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Lightness</div>
+              <div class="stat-value" id="lightness-score">68</div>
+              <div class="stat-trend" id="lightness-trend">getting lighter</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">In Queue</div>
+              <div class="stat-value" id="queue-count">5</div>
+              <div class="stat-trend">of 20 max</div>
+            </div>
+          </div>
+
+          <div class="limit-section">
+            <div class="limit-head">
+              <span>Save limit</span>
+              <span id="limit-text">5 / 20</span>
+            </div>
+            <div class="limit-bar">
+              <div class="limit-fill" id="limit-fill" style="width:25%;"></div>
+            </div>
+          </div>
+
+          <div class="side-label" style="margin-bottom:6px;font-size:9px;color:var(--screen-mid);">Synced to device →</div>
+
+          <div class="queue-list" id="queue-list"></div>
+
+          <div style="margin-top:auto;padding-top:8px;display:flex;gap:6px;">
+            <button class="app-btn" onclick="openShareSheet()">+ Save new</button>
+          </div>
+        </div>
+
+        <!-- WEEK PANEL -->
+        <div class="app-panel" id="panel-week">
+          <div class="stat-label">This week</div>
+          <div class="week-grid">
+            <div class="week-day active">M</div>
+            <div class="week-day active">T</div>
+            <div class="week-day partial">W</div>
+            <div class="week-day active">T</div>
+            <div class="week-day">F</div>
+            <div class="week-day">S</div>
+            <div class="week-day">S</div>
+          </div>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-label">Saved</div>
+              <div class="stat-value" id="week-saved">12</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Released</div>
+              <div class="stat-value" id="week-released">8</div>
+            </div>
+          </div>
+          <div class="stat-card" style="margin-top:8px;">
+            <div class="stat-label">Average age</div>
+            <div class="stat-value">34d</div>
+            <div class="stat-trend">items mostly forgotten</div>
+          </div>
+        </div>
+
+        <!-- LOG PANEL -->
+        <div class="app-panel" id="panel-log">
+          <div class="stat-label" style="margin-bottom:8px;">Released this week</div>
+          <div id="log-list" style="flex:1;overflow-y:auto;"></div>
+          <div class="stat-card" style="margin-top:8px;">
+            <div class="stat-label">Total released</div>
+            <div class="stat-value" id="total-released">21</div>
+            <div class="stat-trend">you are getting lighter</div>
+          </div>
+        </div>
+
+        <!-- SHARE SHEET -->
+        <div class="share-sheet" id="share-sheet">
+          <div class="share-sheet-title">Share to</div>
+          <div class="share-content" id="share-content">"matcha latte recipe tutorial"</div>
+          <div class="share-apps">
+            <div class="share-app">
+              <div class="share-app-icon">M</div>
+              <div class="share-app-name">Messages</div>
+            </div>
+            <div class="share-app">
+              <div class="share-app-icon">N</div>
+              <div class="share-app-name">Notes</div>
+            </div>
+            <div class="share-app romo" onclick="selectRomoApp()">
+              <div class="share-app-icon">R</div>
+              <div class="share-app-name">ROMO</div>
+            </div>
+            <div class="share-app">
+              <div class="share-app-icon">B</div>
+              <div class="share-app-name">Mail</div>
+            </div>
+          </div>
+          <div class="side-label" style="margin-bottom:6px;color:var(--screen-mid);">Tag this save:</div>
+          <div class="tag-row" id="tag-row">
+            <div class="tag-pill" onclick="selectTag(this,'inspiration')">inspiration</div>
+            <div class="tag-pill selected" onclick="selectTag(this,'learn')">learn</div>
+            <div class="tag-pill" onclick="selectTag(this,'recipe')">recipe</div>
+            <div class="tag-pill" onclick="selectTag(this,'reference')">reference</div>
+            <div class="tag-pill" onclick="selectTag(this,'random')">random</div>
+          </div>
+          <button class="app-btn" onclick="confirmSave()">Save to device</button>
+          <button class="app-btn ghost" style="margin-top:6px;" onclick="closeShareSheet()">Cancel</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SYNC ZONE ============ -->
+  <div class="sync-zone">
+    <div class="sync-label">app</div>
+    <div class="sync-line">
+      <div class="sync-pulse" id="sync-pulse"></div>
+    </div>
+    <div class="sync-label">↔ ble</div>
+    <div class="sync-line">
+      <div class="sync-pulse" id="sync-pulse-2"></div>
+    </div>
+    <div class="sync-label">device</div>
+  </div>
+
+  <!-- ============ DEVICE SIDE ============ -->
+  <div class="device-side">
+    <div class="side-label">⚙ Tangible release device</div>
+
+    <div class="device">
+      <div class="device-status">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <div class="dev-led active" id="dev-led"></div>
+          <span class="dev-status-text" id="dev-status">connected</span>
+        </div>
+        <span class="dev-status-text" id="dev-mode-label">decay mode</span>
+      </div>
+
+      <div class="device-bezel">
+        <div class="device-screen" id="device-screen">
+
+          <div id="dev-content">
+            <div class="ds-top">
+              <span id="ds-src">youtube</span>
+              <span id="ds-age">47d ago</span>
+            </div>
+            <div class="ds-title" id="ds-title">"How to learn Rust in 30 days"</div>
+            <div class="ds-sub" id="ds-sub">saved when you still cared</div>
+
+            <div class="dev-weight" id="dev-weight" style="display:none;"></div>
+
+            <div class="ds-decay-wrap" id="ds-decay-wrap">
+              <div class="ds-decay-track">
+                <div class="ds-decay-fill" id="ds-decay-fill" style="width:100%;"></div>
+              </div>
+              <div class="ds-decay-label" id="ds-decay-label">fading · hold to pause</div>
+            </div>
+
+            <div class="ds-row">
+              <span>◂ release</span>
+              <span id="ds-num">1 / 5</span>
+              <span>keep ▸</span>
+            </div>
+          </div>
+
+          <div class="ds-msg" id="msg-released">
+            <div class="ds-msg-big">· gone ·</div>
+            <div class="ds-msg-sm">released</div>
+          </div>
+          <div class="ds-msg" id="msg-kept">
+            <div class="ds-msg-big">· kept ·</div>
+            <div class="ds-msg-sm">still yours</div>
+          </div>
+          <div class="ds-msg" id="msg-empty">
+            <div class="ds-msg-big">all clear.</div>
+            <div class="ds-msg-sm">no items pending</div>
+          </div>
+          <div class="ds-msg" id="msg-incoming">
+            <div class="ds-msg-big">· new ·</div>
+            <div class="ds-msg-sm">item received</div>
+          </div>
+
+        </div>
+      </div>
+
+      <div class="dev-controls">
+
+        <div class="dev-mode-row">
+          <button class="dev-mode active" onclick="setDeviceMode('decay')">Decay</button>
+          <button class="dev-mode" onclick="setDeviceMode('weight')">Weight</button>
+          <button class="dev-mode" onclick="setDeviceMode('crush')">Crush</button>
+          <button class="dev-mode" onclick="setDeviceMode('plain')">Plain</button>
+        </div>
+
+        <div class="dev-wheel-zone">
+          <div class="wheel-label">◂<br>release</div>
+          <div class="wheel" id="wheel" onclick="wheelTap()">
+            <div class="wheel-inner"></div>
+            <div class="wheel-tick"></div>
+          </div>
+          <div class="wheel-label">keep<br>▸</div>
+        </div>
+
+        <button class="dev-btn-hold" id="dev-hold-btn"
+          onmousedown="startHold()" onmouseup="endHold()" onmouseleave="endHold()"
+          ontouchstart="startHold()" ontouchend="endHold()">
+          <div class="btn-progress" id="btn-progress"></div>
+          <div class="btn-text" id="btn-text">HOLD TO KEEP</div>
+        </button>
+
+        <div class="dev-side-btns">
+          <button class="dev-side" onclick="releaseItem()">Release</button>
+          <button class="dev-side" onclick="skipItem()">Skip</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ACTIONS BAR -->
+<div class="actions-bar">
+  <button class="action-btn" onclick="demoFullFlow()">▶ Run full demo</button>
+  <button class="action-btn" onclick="simulateSave()">+ Add item via app</button>
+  <button class="action-btn" onclick="clearAll()">⚠ Clear queue</button>
+  <button class="action-btn" onclick="resetAll()">↺ Reset all</button>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── DATA ──────────────────────────────────────────────────────────
+let queueItems = [
+  { id:1, src:'youtube', title:'"How to learn Rust"', sub:'saved when you still cared', age:'47d', tag:'learn' },
+  { id:2, src:'instagram', title:'"outfit inspo linen"', sub:'you own 3 beige things', age:'23d', tag:'inspiration' },
+  { id:3, src:'article', title:'"To-do list anxiety"', sub:'ironic given your saves', age:'61d', tag:'reference' },
+  { id:4, src:'tiktok', title:'"matcha latte recipe"', sub:'never made matcha once', age:'12d', tag:'recipe' },
+  { id:5, src:'twitter', title:'"deep work thread"', sub:'saved while doom scrolling', age:'89d', tag:'reference' },
+];
+
+let releasedLog = [
+  { title:'"figma tips"', when:'2d ago' },
+  { title:'"productivity hacks"', when:'5d ago' },
+  { title:'"morning routine"', when:'8d ago' },
+];
+
+let stats = {
+  released: 21,
+  kept: 12,
+  weekSaved: 12,
+  weekReleased: 8,
+  lightness: 68,
+};
+
+let currentDeviceItem = 0;
+let deviceMode = 'decay';
+let decayVal = 100;
+let isHolding = false;
+let decayTimer = null;
+let holdProgress = 0;
+let holdTimer = null;
+let transitioning = false;
+let soundEnabled = false;
+let pendingShareItem = null;
+let selectedTag = 'learn';
+
+// ─── SOUND SYSTEM ──────────────────────────────────────────────────
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) {
+    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+    catch(e) { return null; }
+  }
+  return audioCtx;
+}
+
+function beep(freq, duration = 80, type = 'square', vol = 0.08) {
+  if (!soundEnabled) return;
+  const ctx = getAudio();
+  if (!ctx) return;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.value = vol;
+  osc.connect(gain); gain.connect(ctx.destination);
+  osc.start();
+  gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration/1000);
+  osc.stop(ctx.currentTime + duration/1000);
+}
+
+function sound(name) {
+  if (!soundEnabled) return;
+  switch(name) {
+    case 'tick': beep(800, 30, 'square', 0.04); break;
+    case 'select': beep(1200, 50, 'square', 0.05); break;
+    case 'release': 
+      beep(600, 60, 'square', 0.06); 
+      setTimeout(() => beep(400, 80, 'square', 0.05), 60);
+      setTimeout(() => beep(200, 120, 'sawtooth', 0.04), 140);
+      break;
+    case 'keep':
+      beep(800, 50, 'square', 0.05);
+      setTimeout(() => beep(1000, 80, 'square', 0.05), 60);
+      break;
+    case 'sync':
+      beep(1500, 40, 'sine', 0.04);
+      setTimeout(() => beep(2000, 40, 'sine', 0.04), 60);
+      break;
+    case 'incoming':
+      beep(1200, 60, 'sine', 0.05);
+      setTimeout(() => beep(1800, 80, 'sine', 0.05), 80);
+      break;
+    case 'mode':
+      beep(700, 40, 'square', 0.04);
+      break;
+    case 'crush':
+      beep(150, 100, 'sawtooth', 0.06);
+      setTimeout(() => beep(100, 150, 'sawtooth', 0.05), 80);
+      break;
+  }
+}
+
+function toggleSound() {
+  soundEnabled = !soundEnabled;
+  const btn = document.getElementById('sound-toggle');
+  btn.classList.toggle('on', soundEnabled);
+  btn.textContent = soundEnabled ? '♪ sound: on' : '♪ sound: off';
+  if (soundEnabled) {
+    getAudio();
+    sound('select');
+  }
+}
+
+// ─── PHONE TIME ────────────────────────────────────────────────────
+function updateTime() {
+  const now = new Date();
+  const hh = now.getHours();
+  const mm = String(now.getMinutes()).padStart(2,'0');
+  document.getElementById('phone-time').textContent = (hh > 12 ? hh-12 : hh) + ':' + mm;
+}
+setInterval(updateTime, 1000);
+updateTime();
+
+// ─── APP TABS ──────────────────────────────────────────────────────
+function switchAppTab(tab) {
+  document.querySelectorAll('.app-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.app-panel').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('panel-' + tab).classList.add('active');
+  sound('select');
+  if (tab === 'log') renderLog();
+}
+
+// ─── RENDER QUEUE ──────────────────────────────────────────────────
+function renderQueue() {
+  const list = document.getElementById('queue-list');
+  list.innerHTML = queueItems.length === 0
+    ? '<div style="text-align:center;color:var(--screen-mid);font-size:9px;padding:20px;letter-spacing:0.1em;">queue empty<br>device idle</div>'
+    : queueItems.map((it, i) => `
+        <div class="queue-item" data-id="${it.id}">
+          <span class="qi-text">${it.title}</span>
+          <span class="qi-tag">${it.tag}</span>
+          <span class="qi-age">${it.age}</span>
+        </div>
+      `).join('');
+
+  document.getElementById('queue-count').textContent = queueItems.length;
+  document.getElementById('limit-text').textContent = queueItems.length + ' / 20';
+  document.getElementById('limit-fill').style.width = (queueItems.length / 20 * 100) + '%';
+}
+
+function renderLog() {
+  const list = document.getElementById('log-list');
+  list.innerHTML = releasedLog.map(l => `
+    <div class="log-item">
+      <span>${l.title}</span>
+      <span style="color:var(--screen-mid);">${l.when}</span>
+    </div>
+  `).join('');
+  document.getElementById('total-released').textContent = stats.released;
+}
+
+// ─── RENDER DEVICE ─────────────────────────────────────────────────
+function renderDevice() {
+  if (queueItems.length === 0) {
+    document.getElementById('dev-content').style.display = 'none';
+    showDeviceMsg('msg-empty', true);
+    document.getElementById('dev-status').textContent = 'idle · queue empty';
+    stopDecay();
+    return;
+  }
+
+  hideAllMsgs();
+  document.getElementById('dev-content').style.display = 'block';
+  document.getElementById('dev-status').textContent = 'connected';
+
+  if (currentDeviceItem >= queueItems.length) currentDeviceItem = 0;
+  const it = queueItems[currentDeviceItem];
+
+  document.getElementById('ds-src').textContent = it.src + ' · ' + it.tag;
+  document.getElementById('ds-title').textContent = it.title;
+  document.getElementById('ds-sub').textContent = it.sub;
+  document.getElementById('ds-age').textContent = it.age + ' ago';
+  document.getElementById('ds-num').textContent = (currentDeviceItem + 1) + ' / ' + queueItems.length;
+
+  const content = document.getElementById('dev-content');
+  content.style.opacity = 1;
+
+  if (deviceMode === 'weight') renderWeightDots();
+
+  decayVal = 100;
+  document.getElementById('ds-decay-fill').style.width = '100%';
+}
+
+function renderWeightDots() {
+  const wrap = document.getElementById('dev-weight');
+  wrap.innerHTML = '';
+  const total = Math.max(8, queueItems.length);
+  const remaining = queueItems.length;
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dev-wd' + (i >= remaining ? ' empty' : '');
+    wrap.appendChild(d);
+  }
+}
+
+// ─── DEVICE MODES ──────────────────────────────────────────────────
+function setDeviceMode(m) {
+  deviceMode = m;
+  document.querySelectorAll('.dev-mode').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('dev-mode-label').textContent = m + ' mode';
+  sound('mode');
+
+  const decayWrap = document.getElementById('ds-decay-wrap');
+  const weightWrap = document.getElementById('dev-weight');
+  const btnText = document.getElementById('btn-text');
+
+  decayWrap.style.display = (m === 'decay') ? 'block' : 'none';
+  weightWrap.style.display = (m === 'weight') ? 'flex' : 'none';
+
+  if (m === 'decay') btnText.textContent = 'HOLD TO KEEP';
+  else if (m === 'weight') btnText.textContent = 'TAP TO KEEP';
+  else if (m === 'crush') btnText.textContent = 'HOLD TO CRUSH';
+  else btnText.textContent = 'TAP TO KEEP';
+
+  stopDecay();
+  renderDevice();
+  if (m === 'decay') startDecay();
+}
+
+// ─── DECAY ─────────────────────────────────────────────────────────
+function startDecay() {
+  stopDecay();
+  if (queueItems.length === 0) return;
+  decayTimer = setInterval(() => {
+    if (transitioning || queueItems.length === 0) return;
+    if (isHolding) {
+      decayVal = Math.min(100, decayVal + 2);
+      document.getElementById('ds-decay-label').textContent = 'paused · release to fade';
+    } else {
+      decayVal = Math.max(0, decayVal - 0.4);
+      document.getElementById('ds-decay-label').textContent = 'fading · hold to pause';
+    }
+    document.getElementById('ds-decay-fill').style.width = decayVal + '%';
+    const c = document.getElementById('dev-content');
+    if (!isHolding) c.style.opacity = Math.max(0.15, decayVal / 100);
+    else c.style.opacity = 1;
+    if (decayVal <= 0 && !transitioning) autoRelease();
+  }, 80);
+}
+
+function stopDecay() { clearInterval(decayTimer); }
+
+function autoRelease() {
+  transitioning = true;
+  releaseCurrentItem();
+  showDeviceMsg('msg-released');
+  sound('release');
+  setTimeout(() => {
+    hideAllMsgs();
+    document.getElementById('dev-content').style.opacity = 1;
+    transitioning = false;
+    renderDevice();
+    if (deviceMode === 'decay') startDecay();
+  }, 1000);
+}
+
+// ─── ACTIONS ───────────────────────────────────────────────────────
+function releaseCurrentItem() {
+  if (queueItems.length === 0) return;
+  const it = queueItems[currentDeviceItem];
+
+  // Animate phone queue
+  const qItem = document.querySelector(`.queue-item[data-id="${it.id}"]`);
+  if (qItem) qItem.classList.add('releasing');
+
+  setTimeout(() => {
+    queueItems.splice(currentDeviceItem, 1);
+    if (currentDeviceItem >= queueItems.length) currentDeviceItem = Math.max(0, queueItems.length - 1);
+
+    releasedLog.unshift({ title: it.title, when: 'just now' });
+    if (releasedLog.length > 8) releasedLog.pop();
+
+    stats.released++;
+    stats.weekReleased++;
+    stats.lightness = Math.min(100, stats.lightness + 2);
+
+    updateStats();
+    renderQueue();
+    renderLog();
+  }, 400);
+}
+
+function releaseItem() {
+  if (transitioning || queueItems.length === 0) return;
+  transitioning = true;
+  stopDecay();
+  sound(deviceMode === 'crush' ? 'crush' : 'release');
+  showDeviceMsg('msg-released');
+  releaseCurrentItem();
+  setTimeout(() => {
+    hideAllMsgs();
+    document.getElementById('dev-content').style.opacity = 1;
+    transitioning = false;
+    renderDevice();
+    if (deviceMode === 'decay') startDecay();
+  }, 900);
+}
+
+function keepItem() {
+  if (transitioning || queueItems.length === 0) return;
+  transitioning = true;
+  stopDecay();
+  sound('keep');
+  showDeviceMsg('msg-kept');
+  stats.kept++;
+  setTimeout(() => {
+    currentDeviceItem = (currentDeviceItem + 1) % queueItems.length;
+    hideAllMsgs();
+    document.getElementById('dev-content').style.opacity = 1;
+    transitioning = false;
+    renderDevice();
+    if (deviceMode === 'decay') startDecay();
+  }, 800);
+}
+
+function skipItem() {
+  if (transitioning || queueItems.length === 0) return;
+  sound('tick');
+  currentDeviceItem = (currentDeviceItem + 1) % queueItems.length;
+  renderDevice();
+  if (deviceMode === 'decay') { stopDecay(); startDecay(); }
+}
+
+let wheelDir = 0;
+function wheelTap() {
+  if (queueItems.length === 0) return;
+  sound('tick');
+  wheelDir = (wheelDir + 1) % 3;
+  const wheel = document.getElementById('wheel');
+  if (wheelDir === 1) {
+    wheel.classList.add('turn-l');
+    setTimeout(() => { wheel.classList.remove('turn-l'); }, 300);
+    releaseItem();
+  } else if (wheelDir === 2) {
+    wheel.classList.add('turn-r');
+    setTimeout(() => { wheel.classList.remove('turn-r'); }, 300);
+    keepItem();
+  } else {
+    wheelDir = 0;
+  }
+}
+
+// ─── HOLD BUTTON ───────────────────────────────────────────────────
+function startHold() {
+  isHolding = true;
+  holdProgress = 0;
+  clearInterval(holdTimer);
+  if (deviceMode === 'crush') {
+    holdTimer = setInterval(() => {
+      holdProgress = Math.min(100, holdProgress + 4);
+      document.getElementById('btn-progress').style.width = holdProgress + '%';
+      if (holdProgress >= 100) {
+        clearInterval(holdTimer);
+        releaseItem();
+      }
+    }, 40);
+  }
+}
+
+function endHold() {
+  isHolding = false;
+  holdProgress = 0;
+  document.getElementById('btn-progress').style.width = '0%';
+  clearInterval(holdTimer);
+  if (deviceMode === 'weight' || deviceMode === 'plain') keepItem();
+}
+
+// ─── MESSAGES ──────────────────────────────────────────────────────
+function showDeviceMsg(id, persist = false) {
+  hideAllMsgs();
+  document.getElementById(id).classList.add('show');
+}
+
+function hideAllMsgs() {
+  document.querySelectorAll('.ds-msg').forEach(m => m.classList.remove('show'));
+}
+
+// ─── SHARE SHEET ───────────────────────────────────────────────────
+const possibleSaves = [
+  { src:'instagram', title:'"sunset photography tips"', sub:'will it inspire you?', age:'now', tag:'inspiration' },
+  { src:'tiktok', title:'"30 sec pasta hack"', sub:'how many pasta hacks now?', age:'now', tag:'recipe' },
+  { src:'youtube', title:'"productivity 2024"', sub:'last one was a year ago', age:'now', tag:'learn' },
+  { src:'pinterest', title:'"minimalist desk"', sub:'desk still has 5 cups', age:'now', tag:'inspiration' },
+  { src:'article', title:'"on slow living"', sub:'while doom scrolling', age:'now', tag:'reference' },
+  { src:'twitter', title:'"design principles"', sub:'unread thread #47', age:'now', tag:'reference' },
+];
+
+function openShareSheet() {
+  if (queueItems.length >= 20) {
+    showToast('⚠ Limit reached. Release on device first.');
+    return;
+  }
+  pendingShareItem = possibleSaves[Math.floor(Math.random() * possibleSaves.length)];
+  document.getElementById('share-content').textContent = pendingShareItem.title;
+  document.getElementById('share-sheet').classList.add('open');
+  sound('select');
+}
+
+function selectRomoApp() {
+  sound('tick');
+}
+
+function selectTag(el, tag) {
+  document.querySelectorAll('.tag-pill').forEach(p => p.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedTag = tag;
+  sound('tick');
+}
+
+function closeShareSheet() {
+  document.getElementById('share-sheet').classList.remove('open');
+  sound('tick');
+}
+
+function confirmSave() {
+  if (!pendingShareItem) return;
+  const newItem = {
+    id: Date.now(),
+    ...pendingShareItem,
+    tag: selectedTag,
+  };
+
+  closeShareSheet();
+  sound('sync');
+
+  // Animate sync line
+  const pulse1 = document.getElementById('sync-pulse');
+  const pulse2 = document.getElementById('sync-pulse-2');
+  pulse1.classList.remove('animate');
+  pulse2.classList.remove('animate');
+  void pulse1.offsetWidth;
+  pulse1.classList.add('animate');
+  setTimeout(() => {
+    pulse2.classList.remove('animate');
+    void pulse2.offsetWidth;
+    pulse2.classList.add('animate');
+  }, 400);
+
+  // Update phone queue
+  queueItems.push(newItem);
+  stats.weekSaved++;
+  stats.lightness = Math.max(0, stats.lightness - 1);
+
+  setTimeout(() => {
+    renderQueue();
+    updateStats();
+    const newQItem = document.querySelector(`.queue-item[data-id="${newItem.id}"]`);
+    if (newQItem) newQItem.classList.add('syncing');
+  }, 200);
+
+  // Update device
+  setTimeout(() => {
+    sound('incoming');
+    showDeviceMsg('msg-incoming');
+    setTimeout(() => {
+      hideAllMsgs();
+      if (queueItems.length === 1) {
+        currentDeviceItem = 0;
+      }
+      renderDevice();
+      if (deviceMode === 'decay') startDecay();
+    }, 1100);
+  }, 1200);
+
+  showToast('synced to device');
+}
+
+// ─── DEMO FLOWS ────────────────────────────────────────────────────
+function simulateSave() {
+  if (queueItems.length >= 20) {
+    showToast('⚠ Limit reached');
+    return;
+  }
+  pendingShareItem = possibleSaves[Math.floor(Math.random() * possibleSaves.length)];
+  document.getElementById('share-content').textContent = pendingShareItem.title;
+  setTimeout(() => confirmSave(), 100);
+  showToast('saving from instagram...');
+}
+
+function demoFullFlow() {
+  if (!soundEnabled) toggleSound();
+  showToast('▶ Demo: saving via app...');
+  setTimeout(() => simulateSave(), 800);
+  setTimeout(() => showToast('▶ Demo: now on device, releasing...'), 3000);
+  setTimeout(() => releaseItem(), 4000);
+  setTimeout(() => showToast('▶ Demo: lightness +2'), 5500);
+}
+
+function clearAll() {
+  queueItems.forEach(it => releasedLog.unshift({ title: it.title, when: 'just now' }));
+  if (releasedLog.length > 8) releasedLog = releasedLog.slice(0, 8);
+  stats.released += queueItems.length;
+  stats.weekReleased += queueItems.length;
+  stats.lightness = Math.min(100, stats.lightness + queueItems.length * 2);
+  queueItems = [];
+  currentDeviceItem = 0;
+  stopDecay();
+  sound('crush');
+  renderQueue();
+  renderDevice();
+  renderLog();
+  updateStats();
+  showToast('all clear · device idle');
+}
+
+function resetAll() {
+  queueItems = [
+    { id:1, src:'youtube', title:'"How to learn Rust"', sub:'saved when you still cared', age:'47d', tag:'learn' },
+    { id:2, src:'instagram', title:'"outfit inspo linen"', sub:'you own 3 beige things', age:'23d', tag:'inspiration' },
+    { id:3, src:'article', title:'"To-do list anxiety"', sub:'ironic given your saves', age:'61d', tag:'reference' },
+    { id:4, src:'tiktok', title:'"matcha latte recipe"', sub:'never made matcha once', age:'12d', tag:'recipe' },
+    { id:5, src:'twitter', title:'"deep work thread"', sub:'saved while doom scrolling', age:'89d', tag:'reference' },
+  ];
+  releasedLog = [
+    { title:'"figma tips"', when:'2d ago' },
+    { title:'"productivity hacks"', when:'5d ago' },
+    { title:'"morning routine"', when:'8d ago' },
+  ];
+  stats = { released: 21, kept: 12, weekSaved: 12, weekReleased: 8, lightness: 68 };
+  currentDeviceItem = 0;
+  stopDecay();
+  renderQueue();
+  renderDevice();
+  renderLog();
+  updateStats();
+  if (deviceMode === 'decay') startDecay();
+  showToast('reset complete');
+  sound('select');
+}
+
+// ─── HELPERS ───────────────────────────────────────────────────────
+function updateStats() {
+  document.getElementById('lightness-score').textContent = stats.lightness;
+  document.getElementById('lightness-trend').textContent =
+    stats.lightness > 75 ? 'very light' :
+    stats.lightness > 50 ? 'getting lighter' :
+    stats.lightness > 25 ? 'still heavy' : 'quite heavy';
+  document.getElementById('week-saved').textContent = stats.weekSaved;
+  document.getElementById('week-released').textContent = stats.weekReleased;
+  document.getElementById('total-released').textContent = stats.released;
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => toast.classList.remove('show'), 2400);
+}
+
+function showGriefNotif() {
+  if (releasedLog.length === 0) {
+    showToast('no recent releases');
+    return;
+  }
+  const last = releasedLog[0];
+  showToast(`released ${last.when}: ${last.title} · did you miss it?`);
+  sound('select');
+}
+
+// ─── INIT ──────────────────────────────────────────────────────────
+renderQueue();
+renderDevice();
+renderLog();
+updateStats();
+startDecay();
+
+// KEYBOARD
+document.addEventListener('keydown', e => {
+  if (e.code === 'ArrowLeft') releaseItem();
+  if (e.code === 'ArrowRight') keepItem();
+  if (e.code === 'Space') { e.preventDefault(); startHold(); }
+  if (e.code === 'KeyR') resetAll();
+  if (e.code === 'KeyS') { e.preventDefault(); simulateSave(); }
+});
+document.addEventListener('keyup', e => {
+  if (e.code === 'Space') endHold();
+});
+</script>
+</body>
+</html>
